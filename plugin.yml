@@ -1,0 +1,29 @@
+main : com.clashwars.clashwars.ClashWars
+name: ClashWars
+version: 0.1
+description: Main ClashWars plugin!
+depend: [CWCore]
+commands:
+  cow:
+    description: /cow
+    usage: /<command>
+  crash:
+    description: Try and crash the server for testing purposes.
+    usage: /<command>
+  enjinprofile:
+    description: Verify your enjin profile link.
+    usage: /<command>
+  parkour:
+    description: Simple command for lobby parkour
+    usage: /<command> [player]
+  soundtest:
+    description: Command to test sounds.
+    usage: /<command> <category>
+    aliases: [st]
+  pe:
+    description: Display particle effects
+    usage: /<command>
+  sound:
+    description: Play sounds
+    usage: /<command>
+    aliases: [so]
