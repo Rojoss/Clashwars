@@ -1,6 +1,7 @@
 package com.clashwars.clashwars.player;
 
 import com.clashwars.clashwars.ClashWars;
+import com.clashwars.cwcore.utils.CWUtil;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -39,10 +40,11 @@ public class UserManager {
                         while (sqlCharacters.next()) {
                             if (sqlCharacters.getString("uuid").contains("-")) {
                                 UUID uuid = UUID.fromString(sqlCharacters.getString("uuid"));
-                                CWUser cwu = getUser(uuid);
+                                CWUser cwu = getUser(uuid, false);
 
                                 cwu.setUserID(sqlCharacters.getInt("user_id"));
                                 cwu.setCharID(sqlCharacters.getInt("char_id"));
+                                users.put(uuid, cwu);
                             }
                         }
                     } catch (SQLException e) {
@@ -64,13 +66,54 @@ public class UserManager {
         return getUser(cw.getServer().getOfflinePlayer(name));
     }
 
+    public CWUser getUser(final UUID uuid) {
+        return getUser(uuid, true);
+    }
+
     /** Get a CWUser from a player UUID. It will create a new CWUser if it doesn't exist */
-    public CWUser getUser(UUID uuid) {
+    public CWUser getUser(final UUID uuid, boolean checkDatabase) {
         if (users.containsKey(uuid)) {
             return users.get(uuid);
         } else {
-            CWUser cwu = new CWUser(uuid);
+            final CWUser cwu = new CWUser(uuid);
             users.put(uuid, cwu);
+
+            if (checkDatabase) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (cw.getSql() != null) {
+                            try {
+                                Statement checkStatement = cw.getSql().createStatement();
+                                ResultSet character = checkStatement.executeQuery("SELECT char_id,user_id FROM Characters WHERE uuid='" + uuid.toString() + "';");
+
+                                if (character.next()) {
+                                    cwu.setUserID(character.getInt("user_id"));
+                                    cwu.setCharID(character.getInt("char_id"));
+                                } else {
+                                    Statement updateStatement = cw.getSql().createStatement();
+                                    int added = updateStatement.executeUpdate("INSERT INTO Characters (uuid,username) VALUES ('" + uuid.toString() + "','" + CWUtil.getName(uuid) + "');");
+                                    if (added > 0) {
+                                        Statement getStatement = cw.getSql().createStatement();
+                                        ResultSet newChar = checkStatement.executeQuery("SELECT char_id,user_id FROM Characters WHERE uuid='" + uuid.toString() + "';");
+
+                                        if (newChar.next()) {
+                                            cwu.setUserID(newChar.getInt("user_id"));
+                                            cwu.setCharID(newChar.getInt("char_id"));
+                                        }
+                                    } else {
+                                        cw.log("Failed to insert user in database!");
+                                    }
+                                }
+                            } catch (SQLException e) {
+                                cw.log("Failed to load user ID from database!");
+                            }
+                        } else {
+                            cw.log("Failed to load user ID from database!");
+                        }
+                    }
+                }.runTaskAsynchronously(cw);
+            }
             return cwu;
         }
     }
