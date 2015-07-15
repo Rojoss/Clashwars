@@ -171,14 +171,14 @@ public class Commands {
         if (label.equalsIgnoreCase("pe")) {
             //Console check
             if (!(sender instanceof Player)) {
-                sender.sendMessage(CWUtil.formatARMsg("&cThis is a player command only."));
+                sender.sendMessage(CWUtil.formatCWMsg("&cThis is a player command only."));
                 return true;
             }
             Player player = (Player) sender;
 
             //Permission check.
             if (!player.isOp() && !player.hasPermission("cwcore.pe")) {
-                player.sendMessage(CWUtil.formatARMsg("&cInsuficient permissions."));
+                player.sendMessage(CWUtil.formatCWMsg("&cInsuficient permissions."));
                 return true;
             }
 
@@ -187,18 +187,18 @@ public class Commands {
                 for (ParticleEffect effect : ParticleEffect.values()) {
                     effectNames.add(effect.toString().toLowerCase().replace("_", ""));
                 }
-                player.sendMessage(CWUtil.formatARMsg("&6&lEffect List&8&l: &7" + CWUtil.implode(effectNames, "&8, &7")));
+                player.sendMessage(CWUtil.formatCWMsg("&6&lEffect List&8&l: &7" + CWUtil.implode(effectNames, "&8, &7")));
                 return true;
             }
 
             if (args.length < 6) {
-                player.sendMessage(CWUtil.formatARMsg("&cInvalid usage: &4/pe {particle|list} {xo} {yo} {zo} {speed} {amt}"));
+                player.sendMessage(CWUtil.formatCWMsg("&cInvalid usage: &4/pe {particle|list} {xo} {yo} {zo} {speed} {amt}"));
                 return true;
             }
 
             ParticleEffect effect = ParticleEffect.fromName(args[0]);
             if (effect == null) {
-                player.sendMessage(CWUtil.formatARMsg("&cInvalid effect specified. See &4/pe list &cfor effects."));
+                player.sendMessage(CWUtil.formatCWMsg("&cInvalid effect specified. See &4/pe list &cfor effects."));
                 return true;
             }
 
@@ -220,14 +220,14 @@ public class Commands {
         if (label.equalsIgnoreCase("sound") || label.equalsIgnoreCase("so")) {
             //Console check
             if (!(sender instanceof Player)) {
-                sender.sendMessage(CWUtil.formatARMsg("&cThis is a player command only."));
+                sender.sendMessage(CWUtil.formatCWMsg("&cThis is a player command only."));
                 return true;
             }
             Player player = (Player)sender;
 
             //Permission check.
             if (!player.isOp() && !player.hasPermission("cwcore.sound")) {
-                player.sendMessage(CWUtil.formatARMsg("&cInsuficient permissions."));
+                player.sendMessage(CWUtil.formatCWMsg("&cInsuficient permissions."));
                 return true;
             }
 
@@ -236,18 +236,18 @@ public class Commands {
                 for (Sound sound : Sound.values()) {
                     soundNames.add(sound.toString().toLowerCase().replace("_", ""));
                 }
-                player.sendMessage(CWUtil.formatARMsg("&6&lSound List&8&l: &7" + CWUtil.implode(soundNames, "&8, &7")));
+                player.sendMessage(CWUtil.formatCWMsg("&6&lSound List&8&l: &7" + CWUtil.implode(soundNames, "&8, &7")));
                 return true;
             }
 
             if (args.length < 1) {
-                player.sendMessage(CWUtil.formatARMsg("&cInvalid usage: &4/sound {sound|list} [volume] [pitch]"));
+                player.sendMessage(CWUtil.formatCWMsg("&cInvalid usage: &4/sound {sound|list} [volume] [pitch]"));
                 return true;
             }
 
             Sound sound = cw.getCore().getSounds().getSound(args[0]);
             if (sound == null) {
-                player.sendMessage(CWUtil.formatARMsg("&cInvalid sound specified. See &4/sound list &cfor all sounds."));
+                player.sendMessage(CWUtil.formatCWMsg("&cInvalid sound specified. See &4/sound list &cfor all sounds."));
                 return true;
             }
 
