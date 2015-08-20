@@ -2,6 +2,7 @@ package com.clashwars.clashwars;
 
 import com.clashwars.clashwars.commands.Commands;
 import com.clashwars.clashwars.config.PluginCfg;
+import com.clashwars.clashwars.listeners.HubEvents;
 import com.clashwars.clashwars.listeners.MainEvents;
 import com.clashwars.clashwars.player.UserManager;
 import com.clashwars.clashwars.util.SoundMenu;
@@ -90,6 +91,7 @@ public class ClashWars extends JavaPlugin {
     private void registerEvents() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new MainEvents(this), this);
+        pm.registerEvents(new HubEvents(this), this);
         pm.registerEvents(soundMenu, this);
     }
 
