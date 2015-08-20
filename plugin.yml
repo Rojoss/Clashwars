@@ -27,3 +27,6 @@ commands:
     description: Play sounds
     usage: /<command>
     aliases: [so]
+  portal:
+    description: Portal creation and management
+    usage: /<command>

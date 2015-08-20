@@ -1,16 +1,17 @@
 package com.clashwars.clashwars.commands;
 
 import com.clashwars.clashwars.ClashWars;
+import com.clashwars.clashwars.config.PortalData;
 import com.clashwars.clashwars.util.Util;
+import com.clashwars.cwcore.cuboid.Cuboid;
+import com.clashwars.cwcore.cuboid.Selection;
+import com.clashwars.cwcore.cuboid.SelectionStatus;
 import com.clashwars.cwcore.hat.Hat;
 import com.clashwars.cwcore.hat.HatManager;
 import com.clashwars.cwcore.packet.ParticleEffect;
 import com.clashwars.cwcore.utils.CWUtil;
 import com.clashwars.cwcore.utils.Enjin;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.BlockCommandSender;
@@ -273,6 +274,207 @@ public class Commands {
         }
 
 
+        //============================================================================
+        //================================= /portal ==================================
+        //============================================================================
+        if (label.equalsIgnoreCase("portal")) {
+            //Console check
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(CWUtil.formatCWMsg("&cThis is a player command only."));
+                return true;
+            }
+            Player player = (Player)sender;
+
+            //Permission check.
+            if (!player.isOp() && !player.hasPermission("cw.portal")) {
+                player.sendMessage(CWUtil.formatCWMsg("&cInsuficient permissions."));
+                return true;
+            }
+
+            //Show help with no args
+            if (args.length < 1) {
+                showPortalHelp(player);
+                return true;
+            }
+
+
+            //List all portals
+            if (args[0].equalsIgnoreCase("list")) {
+                return true;
+            }
+
+
+            //Show portal information
+            if (args[0].equalsIgnoreCase("info")) {
+                if (args.length < 2) {
+                    player.sendMessage(Util.formatMsg("&cNo portal ID specified! &7/portal info {ID}"));
+                    return true;
+                }
+                PortalData portal = cw.portalCfg.getPortal(args[1]);
+                if (portal == null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid portal ID specified! &7/portal list for a list of all portals!"));
+                    return true;
+                }
+
+                Cuboid cuboid = portal.getCuboid();
+                player.sendMessage(CWUtil.integrateColor("&8===== &4&lPortal Info &8====="));
+                player.sendMessage(CWUtil.integrateColor("&6Name/ID&8: &7" + args[0]));
+                player.sendMessage(CWUtil.integrateColor("&6World&8: &7" + cuboid.getWorld().toString()));
+                player.sendMessage(CWUtil.integrateColor("&6Location 1&8: &c" + cuboid.getMinX() + "&7,&a" + cuboid.getMinY() + "&7,&9" + cuboid.getMinZ()));
+                player.sendMessage(CWUtil.integrateColor("&6Location 2&8: &c" + cuboid.getMaxX() + "&7,&a" + cuboid.getMaxY() + "&7,&9" + cuboid.getMaxZ()));
+                if (portal.getTargetServer().isEmpty()) {
+                    if (portal.getTarget() != null) {
+                        Location target = portal.getTarget();
+                        player.sendMessage(CWUtil.integrateColor("&6Target&8: &8(&7LOCATION&8) " + target.getBlockX() + "&7,&a" + target.getBlockY() + "&7,&9" + target.getBlockZ() + " &e" + target.getWorld().toString()));
+                    } else {
+                        player.sendMessage(CWUtil.integrateColor("&6Target&8: &c&lNo target set!"));
+                    }
+                } else {
+                    player.sendMessage(CWUtil.integrateColor("&6Target&8: &8(&7SERVER&8) &a" + portal.getTargetServer()));
+                }
+                return true;
+            }
+
+            //Create a new portal
+            if (args[0].equalsIgnoreCase("create")) {
+                if (args.length < 2) {
+                    player.sendMessage(Util.formatMsg("&cNo portal ID specified! &7/portal create {ID}"));
+                    return true;
+                }
+                PortalData portal = cw.portalCfg.getPortal(args[1]);
+                if (portal != null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid portal ID specified! &7A portal with this ID already exists."));
+                    return true;
+                }
+
+                Selection selection = cw.getCore().getSel();
+                SelectionStatus status = selection.getStatus(player);
+                if (status == SelectionStatus.NONE) {
+                    player.sendMessage(Util.formatMsg("&cNo cuboid selected! &7Use &c/cww &7to get the wand and select two points."));
+                    return true;
+                }
+
+                if (status == SelectionStatus.POS2) {
+                    player.sendMessage(Util.formatMsg("&cInvalid cuboid! &7You are missing &cposition 1&7!"));
+                    return true;
+                }
+
+                if (status == SelectionStatus.POS1) {
+                    player.sendMessage(Util.formatMsg("&cInvalid cuboid! &7You are missing &cposition 2&7!"));
+                    return true;
+                }
+
+                Cuboid cuboid = selection.getSelection(player);
+                if (cuboid == null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid cuboid! &7Try selecting it again!"));
+                    return true;
+                }
+
+                portal = new PortalData();
+                portal.setCuboid(cuboid);
+                cw.portalCfg.setPortal(args[1], portal);
+                player.sendMessage(Util.formatMsg("&6&lNew portal created!"));
+                player.sendMessage(Util.formatMsg("&7Don't forget to set the portal target!"));
+                return true;
+            }
+
+            //Set the portal target/destination
+            if (args[0].equalsIgnoreCase("target")) {
+                if (args.length < 2) {
+                    player.sendMessage(Util.formatMsg("&cNo portal ID specified! &7/portal target {ID} [server]"));
+                    return true;
+                }
+                PortalData portal = cw.portalCfg.getPortal(args[1]);
+                if (portal == null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid portal ID specified! &7/portal list for a list of all portals!"));
+                    return true;
+                }
+
+                if (args.length > 2) {
+                    portal.setTargetServer(args[2]);
+                    cw.portalCfg.setPortal(args[1], portal);
+                    player.sendMessage(Util.formatMsg("&6&lPortal target set to server &a&l" + args[2] + "&6&l!"));
+                } else {
+                    portal.setTarget(player.getLocation());
+                    cw.portalCfg.setPortal(args[1], portal);
+                    player.sendMessage(Util.formatMsg("&6&lPortal target set at your location!"));
+                }
+                return true;
+            }
+
+            //Redefine the portal cuboid
+            if (args[0].equalsIgnoreCase("redefine")) {
+                if (args.length < 2) {
+                    player.sendMessage(Util.formatMsg("&cNo portal ID specified! &7/portal redefine {ID}"));
+                    return true;
+                }
+                PortalData portal = cw.portalCfg.getPortal(args[1]);
+                if (portal == null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid portal ID specified! &7/portal list for a list of all portals!"));
+                    return true;
+                }
+
+                Selection selection = cw.getCore().getSel();
+                SelectionStatus status = selection.getStatus(player);
+                if (status == SelectionStatus.NONE) {
+                    player.sendMessage(Util.formatMsg("&cNo cuboid selected! &7Use &c/cww &7to get the wand and select two points."));
+                    return true;
+                }
+
+                if (status == SelectionStatus.POS2) {
+                    player.sendMessage(Util.formatMsg("&cInvalid cuboid! &7You are missing &cposition 1&7!"));
+                    return true;
+                }
+
+                if (status == SelectionStatus.POS1) {
+                    player.sendMessage(Util.formatMsg("&cInvalid cuboid! &7You are missing &cposition 2&7!"));
+                    return true;
+                }
+
+                Cuboid cuboid = selection.getSelection(player);
+                if (cuboid == null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid cuboid! &7Try selecting it again!"));
+                    return true;
+                }
+
+                portal.setCuboid(cuboid);
+                cw.portalCfg.setPortal(args[1], portal);
+                player.sendMessage(Util.formatMsg("&6&lPortal cuboid redefined!"));
+                return true;
+            }
+
+            //Remove the portal
+            if (args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("delete")) {
+                if (args.length < 2) {
+                    player.sendMessage(Util.formatMsg("&cNo portal ID specified! &7/portal remove {ID}"));
+                    return true;
+                }
+                PortalData portal = cw.portalCfg.getPortal(args[1]);
+                if (portal == null) {
+                    player.sendMessage(Util.formatMsg("&cInvalid portal ID specified! &7/portal list for a list of all portals!"));
+                    return true;
+                }
+
+                cw.portalCfg.removePortal(args[1]);
+                player.sendMessage(Util.formatMsg("&6&lPortal removed!"));
+                return true;
+            }
+
+            showPortalHelp(player);
+            return true;
+        }
+
+
         return false;
+    }
+
+    private void showPortalHelp(Player player) {
+        player.sendMessage(CWUtil.integrateColor("&8===== &4&lPortal Commands &8====="));
+        player.sendMessage(CWUtil.integrateColor("&6/portal list [page] &8- &5List all the portals"));
+        player.sendMessage(CWUtil.integrateColor("&6/portal info {ID} &8- &5Show portal info."));
+        player.sendMessage(CWUtil.integrateColor("&6/portal create {ID} &8- &5Create a new portal"));
+        player.sendMessage(CWUtil.integrateColor("&6/portal target {ID} [server] &8- &5Set the portal target"));
+        player.sendMessage(CWUtil.integrateColor("&6/portal redefine {ID} &8- &5Redefine the portal cuboid"));
+        player.sendMessage(CWUtil.integrateColor("&6/portal remove {ID} &8- &5Remove the portal"));
     }
 }

@@ -2,6 +2,7 @@ package com.clashwars.clashwars;
 
 import com.clashwars.clashwars.commands.Commands;
 import com.clashwars.clashwars.config.PluginCfg;
+import com.clashwars.clashwars.config.PortalCfg;
 import com.clashwars.clashwars.listeners.HubEvents;
 import com.clashwars.clashwars.listeners.MainEvents;
 import com.clashwars.clashwars.player.UserManager;
@@ -30,6 +31,7 @@ public class ClashWars extends JavaPlugin {
     private Connection c;
 
     public PluginCfg pluginCfg;
+    public PortalCfg portalCfg;
 
     public UserManager um;
 
@@ -58,6 +60,8 @@ public class ClashWars extends JavaPlugin {
 
         pluginCfg = new PluginCfg("plugins/ClashWars/ClashWars.yml");
         pluginCfg.load();
+        portalCfg = new PortalCfg("plugins/ClashWars/data/Portals.yml");
+        portalCfg.load();
 
         sql = new MySQL(this, "37.26.106.5", "3306", "clashwar_data", "clashwar_main", pluginCfg.SQL__PASS);
         try {
@@ -77,6 +81,8 @@ public class ClashWars extends JavaPlugin {
         registerEvents();
 
         cmds = new Commands(this);
+
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         log("loaded successfully");
     }
