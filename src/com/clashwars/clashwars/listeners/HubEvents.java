@@ -5,17 +5,21 @@ import com.clashwars.clashwars.config.PortalData;
 import com.clashwars.clashwars.util.Util;
 import com.clashwars.cwcore.debug.Debug;
 import com.clashwars.cwcore.events.PlayerMoveBlockEvent;
+import com.clashwars.cwcore.packet.ParticleEffect;
 import com.clashwars.cwcore.utils.CWUtil;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.util.Vector;
 
 import java.util.Map;
@@ -82,4 +86,20 @@ public class HubEvents implements Listener {
 
         player.setVelocity(player.getVelocity().add(velocity));
     }
+
+    @EventHandler
+    private void interact(PlayerInteractEvent event) {
+        if (event.getAction() != Action.LEFT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+
+        Block block = event.getClickedBlock();
+        String cmd = cw.cmdBlockCfg.getCmd(block);
+        if (!cmd.isEmpty()) {
+            event.getPlayer().performCommand(cmd);
+            event.getPlayer().playSound(block.getLocation(), Sound.WOOD_CLICK, 1, 1);
+            ParticleEffect.ENCHANTMENT_TABLE.display(0.5f, 0.5f, 0.5f, 0, 30, block.getLocation().add(0.5f, 0.5f, 0.5f));
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.clashwars.clashwars;
 
 import com.clashwars.clashwars.commands.Commands;
+import com.clashwars.clashwars.config.CmdBlockCfg;
 import com.clashwars.clashwars.config.PluginCfg;
 import com.clashwars.clashwars.config.PortalCfg;
 import com.clashwars.clashwars.listeners.HubEvents;
@@ -16,7 +17,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 public class ClashWars extends JavaPlugin {
@@ -32,6 +39,9 @@ public class ClashWars extends JavaPlugin {
 
     public PluginCfg pluginCfg;
     public PortalCfg portalCfg;
+    public CmdBlockCfg cmdBlockCfg;
+
+    public HashMap<String, List<String>> help = new HashMap<String, List<String>>();
 
     public UserManager um;
 
@@ -62,6 +72,8 @@ public class ClashWars extends JavaPlugin {
         pluginCfg.load();
         portalCfg = new PortalCfg("plugins/ClashWars/data/Portals.yml");
         portalCfg.load();
+        cmdBlockCfg = new CmdBlockCfg("plugins/ClashWars/data/CmdBlocks.yml");
+        cmdBlockCfg.load();
 
         sql = new MySQL(this, "37.26.106.5", "3306", "clashwar_data", "clashwar_main", pluginCfg.SQL__PASS);
         try {
@@ -73,6 +85,8 @@ public class ClashWars extends JavaPlugin {
             log("The plugin should still be able to run fine but this message shouldn't be ignored!");
             log("##############################################################");
         }
+
+        loadHelpTopics();
 
         soundMenu = new SoundMenu();
 
@@ -99,6 +113,30 @@ public class ClashWars extends JavaPlugin {
         pm.registerEvents(new MainEvents(this), this);
         pm.registerEvents(new HubEvents(this), this);
         pm.registerEvents(soundMenu, this);
+    }
+
+    public void loadHelpTopics() {
+        help.clear();
+        String path = getDataFolder() + "/help/";
+        File folder = new File(path);
+        folder.mkdir();
+        File[] files = folder.listFiles();
+        for (File file : files) {
+            if (file.canRead()) {
+                try {
+                    Scanner inFile1 = new Scanner(file).useDelimiter(",\\s*");
+                    List<String> lines = new ArrayList<String>();
+                    while (inFile1.hasNext()) {
+                        lines.add(inFile1.next());
+                    }
+                    inFile1.close();
+
+                    String name = file.getName().toLowerCase().replaceFirst("[.][^.]+$", "");
+                    help.put(name, lines);
+                } catch(IOException e) {
+                }
+            }
+        }
     }
 
 

@@ -22,9 +22,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.json.simple.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import javax.sound.sampled.Line;
+import java.util.*;
 
 public class Commands {
 
@@ -67,6 +66,34 @@ public class Commands {
                         }
                     }.runTaskLater(cw, 100);
                 }
+            }
+            return true;
+        }
+
+
+        //============================================================================
+        //============================== /help {topic} ===============================
+        //============================================================================
+        if (label.equalsIgnoreCase("help")) {
+            if (args.length < 1) {
+                sender.sendMessage(CWUtil.formatCWMsg("&6&lHelp topics&8&l: &7" + CWUtil.implode(cw.help.keySet(), "&8, &7")));
+                return true;
+            }
+
+            if (args[0].equalsIgnoreCase("reload") && (sender.isOp() || sender.hasPermission("help.reload"))) {
+                cw.loadHelpTopics();
+                sender.sendMessage(Util.formatMsg("&6Help topics reloaded!"));
+                return true;
+            }
+
+            if (!cw.help.containsKey(args[0].toLowerCase())) {
+                sender.sendMessage(CWUtil.formatCWMsg("&6&lHelp topics&8&l: &7" + CWUtil.implode(cw.help.keySet(), "&8, &7")));
+                return true;
+            }
+
+            List<String> lines = cw.help.get(args[0].toLowerCase());
+            for (String line : lines) {
+                sender.sendMessage(CWUtil.integrateColor(line));
             }
             return true;
         }
@@ -465,6 +492,65 @@ public class Commands {
         }
 
 
+
+        //============================================================================
+        //================================ /cmdblock =================================
+        //============================================================================
+        if (label.equalsIgnoreCase("cmdblock")) {
+            //Console check
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(CWUtil.formatCWMsg("&cThis is a player command only."));
+                return true;
+            }
+            Player player = (Player)sender;
+
+            //Permission check.
+            if (!player.isOp() && !player.hasPermission("cw.cmdblock")) {
+                player.sendMessage(CWUtil.formatCWMsg("&cInsuficient permissions."));
+                return true;
+            }
+
+            //Show help with no args
+            if (args.length < 1) {
+                showCmdBlockHelp(player);
+                return true;
+            }
+
+            //List all cmd blocks
+            if (args[0].equalsIgnoreCase("list")) {
+                return true;
+            }
+
+            //Create command block
+            if (args[0].equalsIgnoreCase("create") || args[0].equalsIgnoreCase("add")) {
+                Block block = player.getTargetBlock((Set<Material>) null, 10);
+
+                cw.cmdBlockCfg.setCmdBlock(block, CWUtil.implode(args, " ", 1));
+
+                player.sendMessage(Util.formatMsg("&6&lNew command block created!"));
+                return true;
+            }
+
+            //Remove command block
+            if (args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("delete")) {
+                Block block = player.getTargetBlock((Set<Material>) null, 10);
+                String cmdString = cw.cmdBlockCfg.getCmd(block);
+
+                if (cmdString.isEmpty()) {
+                    player.sendMessage(Util.formatMsg("&cThis block doesn't have a command!"));
+                    return true;
+                }
+
+                cw.cmdBlockCfg.removeCmdBlock(block);
+                player.sendMessage(Util.formatMsg("&6&lcommand block removed!"));
+                return true;
+            }
+
+            showCmdBlockHelp(player);
+            return true;
+        }
+
+
         return false;
     }
 
@@ -476,5 +562,12 @@ public class Commands {
         player.sendMessage(CWUtil.integrateColor("&6/portal target {ID} [server] &8- &5Set the portal target"));
         player.sendMessage(CWUtil.integrateColor("&6/portal redefine {ID} &8- &5Redefine the portal cuboid"));
         player.sendMessage(CWUtil.integrateColor("&6/portal remove {ID} &8- &5Remove the portal"));
+    }
+
+    private void showCmdBlockHelp(Player player) {
+        player.sendMessage(CWUtil.integrateColor("&8===== &4&lCommand Block Commands &8====="));
+        player.sendMessage(CWUtil.integrateColor("&6/cmdblock list [page] &8- &5List all the command blocks"));
+        player.sendMessage(CWUtil.integrateColor("&6/cmdblock create {cmd} &8- &5Create a new command block"));
+        player.sendMessage(CWUtil.integrateColor("&6/cmdblock remove &8- &5Remove a command block."));
     }
 }

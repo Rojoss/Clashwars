@@ -30,3 +30,9 @@ commands:
   portal:
     description: Portal creation and management
     usage: /<command>
+  help:
+    description: Shows help pages
+    usage: /<command> [topic]
+  cmdblock:
+    description: Links commands to blocks.
+    usage: /<command>
